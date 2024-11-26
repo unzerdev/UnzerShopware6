@@ -1,3 +1,6 @@
+# 6.2.6
+* Fix Apple Pay payment processing
+
 # 6.2.5
 * Update to improve compatibility with 3rd-party-plugins
 
