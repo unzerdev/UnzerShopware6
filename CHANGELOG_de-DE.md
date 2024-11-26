@@ -1,3 +1,6 @@
+# 5.9.7
+* Fix Apple Pay Zahlungsverarbeitung
+
 # 5.9.6
 * Workarround Log-Funktionalität
 
