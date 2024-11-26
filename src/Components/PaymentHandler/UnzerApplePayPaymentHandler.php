@@ -46,8 +46,8 @@ class UnzerApplePayPaymentHandler extends AbstractUnzerPaymentHandler
 
         try {
             $returnUrl = $bookingMode === BookingMode::CHARGE
-                ? $this->charge($transaction->getReturnUrl(), RecurrenceTypes::ONE_CLICK)
-                : $this->authorize($transaction->getReturnUrl(), $this->unzerBasket->getTotalValueGross(), RecurrenceTypes::ONE_CLICK);
+                ? $this->charge($transaction->getReturnUrl(), null)
+                : $this->authorize($transaction->getReturnUrl(), $this->unzerBasket->getTotalValueGross(), null);
 
             return new RedirectResponse($returnUrl);
         } catch (UnzerApiException $apiException) {

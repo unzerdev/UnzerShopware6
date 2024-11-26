@@ -1,3 +1,6 @@
+# 5.9.7
+* Fix Apple Pay payment processing
+
 # 5.9.6
 * Workarround for logging functionality
 
