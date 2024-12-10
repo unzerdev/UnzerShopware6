@@ -111,7 +111,7 @@
         },
         "apple-pay": {
             "certificates": {
-                "title": "Apple Pay Zertifikate",
+                "title": "Apple Pay Zertifikate (Veraltet)",
                 "check": {
                     "paymentProcessingValid": {
                         "true": "Das Payment Processing-Zertifikat ist vorhanden und gültig",
@@ -218,5 +218,8 @@
             "empty": "Für diesen Private Key sind keine Webhooks registriert. Bitte prüfen Sie ob dieser valide ist und ob Konfigurationen für dedizierte Verkaufskanäle vorgenommen wurden.",
             "show": "Webhooks anzeigen"
         }
+    },
+    "sw-payment-card": {
+        "deprecated": "Veraltet"
     }
 }

@@ -9,6 +9,7 @@ import UnzerPaymentSepaDirectDebitPlugin from './unzer/unzer-payment.sepa-direct
 import UnzerPaymentSepaDirectDebitSecuredPlugin from './unzer/unzer-payment.sepa-direct-debit-secured.plugin';
 import UnzerPaymentPaylaterInvoicePlugin from "./unzer/unzer-payment.paylater-invoice.plugin";
 import UnzerPaymentApplePayPlugin from './unzer/unzer-payment.apple-pay.plugin';
+import UnzerPaymentApplePayV2Plugin from './unzer/unzer-payment.apple-pay-v2.plugin';
 import UnzerPaymentPaylaterInstallmentPlugin from './unzer/unzer-payment.paylater-installment.plugin';
 import UnzerPaymentPaylaterDirectDebitSecuredPlugin from './unzer/unzer-payment.paylater-direct-debit-secured.plugin';
 import UnzerPaymentGooglePayPlugin from './unzer/unzer-payment.google-pay.plugin';
@@ -23,6 +24,7 @@ window.PluginManager.register('UnzerPaymentPayPal', UnzerPaymentPayPalPlugin, '[
 window.PluginManager.register('UnzerPaymentSepaDirectDebit', UnzerPaymentSepaDirectDebitPlugin, '[data-unzer-payment-sepa-direct-debit]');
 window.PluginManager.register('UnzerPaymentSepaDirectDebitSecured', UnzerPaymentSepaDirectDebitSecuredPlugin, '[data-unzer-payment-sepa-direct-debit-secured]');
 window.PluginManager.register('UnzerPaymentApplePay', UnzerPaymentApplePayPlugin, '[data-unzer-payment-apple-pay]');
+window.PluginManager.register('UnzerPaymentApplePayV2', UnzerPaymentApplePayV2Plugin, '[data-unzer-payment-apple-pay-v2]');
 window.PluginManager.register('UnzerPaymentPaylaterInvoice', UnzerPaymentPaylaterInvoicePlugin, '[data-unzer-payment-paylater-invoice]');
 window.PluginManager.register('UnzerPaymentPaylaterInstallment', UnzerPaymentPaylaterInstallmentPlugin, '[data-unzer-payment-paylater-installment]');
 window.PluginManager.register('UnzerPaymentPaylaterDirectDebitSecured', UnzerPaymentPaylaterDirectDebitSecuredPlugin, '[data-unzer-payment-paylater-direct-debit-secured]');

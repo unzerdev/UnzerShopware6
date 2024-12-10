@@ -113,10 +113,15 @@ Component.register('unzer-payment-settings', {
         onValidateCredentials(keyPairSetting) {
             this.isTestSuccessful = false;
             this.selectedKeyPairForTesting = keyPairSetting;
+            const keyPairIndex = this.getArrayKeyOfKeyPairSetting(keyPairSetting);
+            let keyPairValues = keyPairSetting;
+            if(keyPairIndex !== -1) {
+                keyPairValues =  this.keyPairSettings[keyPairIndex];
+            }
 
             const credentials = {
-                publicKey: keyPairSetting.publicKey,
-                privateKey: keyPairSetting.privateKey,
+                publicKey: keyPairValues.publicKey,
+                privateKey: keyPairValues.privateKey,
                 salesChannel: this.$refs.systemConfig.currentSalesChannelId
             };
 
