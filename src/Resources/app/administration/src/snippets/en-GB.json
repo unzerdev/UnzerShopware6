@@ -111,7 +111,7 @@
         },
         "apple-pay": {
             "certificates": {
-                "title": "Apple Pay Certificates",
+                "title": "Apple Pay Certificates (Deprecated)",
                 "check": {
                     "paymentProcessingValid": {
                         "true": "The Payment Processing certificate is present and valid",
@@ -218,5 +218,8 @@
             "empty": "There are no webhooks registered for this private key. Make sure the private key is valid and check for other specific sales channel configurations.",
             "show": "Show webhooks"
         }
+    },
+    "sw-payment-card": {
+        "deprecated": "Deprecated"
     }
 }

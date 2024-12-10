@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace UnzerPayment6\Installer;
 
+use League\Flysystem\Filesystem;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -15,12 +16,12 @@ use Shopware\Core\Framework\Plugin\Context\UpdateContext;
 use Shopware\Core\Framework\Plugin\Util\PluginIdProvider;
 use UnzerPayment6\Components\PaymentHandler\UnzerAlipayPaymentHandler;
 use UnzerPayment6\Components\PaymentHandler\UnzerApplePayPaymentHandler;
+use UnzerPayment6\Components\PaymentHandler\UnzerApplePayV2PaymentHandler;
 use UnzerPayment6\Components\PaymentHandler\UnzerBancontactHandler;
 use UnzerPayment6\Components\PaymentHandler\UnzerCreditCardPaymentHandler;
 use UnzerPayment6\Components\PaymentHandler\UnzerDirectDebitPaymentHandler;
 use UnzerPayment6\Components\PaymentHandler\UnzerDirectDebitSecuredPaymentHandler;
 use UnzerPayment6\Components\PaymentHandler\UnzerEpsPaymentHandler;
-use UnzerPayment6\Components\PaymentHandler\UnzerGiropayPaymentHandler;
 use UnzerPayment6\Components\PaymentHandler\UnzerGooglePayPaymentHandler;
 use UnzerPayment6\Components\PaymentHandler\UnzerIdealPaymentHandler;
 use UnzerPayment6\Components\PaymentHandler\UnzerInstallmentSecuredPaymentHandler;
@@ -59,6 +60,7 @@ class PaymentInstaller implements InstallerInterface
     public const PAYMENT_ID_BANCONTACT = '87aa7a4e786c43ec9d4b9c1fd2aa51eb';
     public const PAYMENT_ID_PAYLATER_INVOICE = '09588ffee8064f168e909ff31889dd7f';
     public const PAYMENT_ID_APPLE_PAY = '62490bda54fa48fbb29ed6b9368bafe1';
+    public const PAYMENT_ID_APPLE_PAY_V2 = '55d6b81aa84911ef948a2f39e097a1d7';
     public const PAYMENT_ID_PAYLATER_INSTALLMENT = '12fbfbce271a43a89b3783453b88e9a6';
     public const PAYMENT_ID_PAYLATER_DIRECT_DEBIT_SECURED = '6d6adcd4b7bf40499873c294a85f32ed';
     public const PAYMENT_ID_GOOGLE_PAY = '67b6d50c1ecd11ef9e21d7850819bc50';
@@ -83,10 +85,20 @@ class PaymentInstaller implements InstallerInterface
         self::PAYMENT_ID_BANCONTACT,
         self::PAYMENT_ID_PAYLATER_INVOICE,
         self::PAYMENT_ID_APPLE_PAY,
+        self::PAYMENT_ID_APPLE_PAY_V2,
         self::PAYMENT_ID_PAYLATER_INSTALLMENT,
         self::PAYMENT_ID_PAYLATER_DIRECT_DEBIT_SECURED,
         self::PAYMENT_ID_GOOGLE_PAY,
         self::PAYMENT_ID_TWINT,
+    ];
+
+    public const DEPRECATED_PAYMENT_METHOD_IDS = [
+        self::PAYMENT_ID_FLEXIPAY,
+        self::PAYMENT_ID_INVOICE,
+        self::PAYMENT_ID_INVOICE_SECURED,
+        self::PAYMENT_ID_INSTALLMENT_SECURED,
+        self::PAYMENT_ID_DIRECT_DEBIT_SECURED,
+        self::PAYMENT_ID_APPLE_PAY,
     ];
 
     public const PAYMENT_METHODS = [
@@ -155,7 +167,7 @@ class PaymentInstaller implements InstallerInterface
             ],
         ],
         [
-            'id'                => self::PAYMENT_ID_IDEAL,
+            'id' => self::PAYMENT_ID_IDEAL,
             'handlerIdentifier' => UnzerIdealPaymentHandler::class,
             'name' => 'iDEAL',
             'technicalName' => 'unzer_ideal',
@@ -399,8 +411,24 @@ class PaymentInstaller implements InstallerInterface
         [
             'id' => self::PAYMENT_ID_APPLE_PAY,
             'handlerIdentifier' => UnzerApplePayPaymentHandler::class,
-            'name' => 'Apple Pay',
+            'name' => 'Apple Pay (Deprecated)',
             'technicalName' => 'unzer_applepay',
+            'translations' => [
+                'de-DE' => [
+                    'name' => 'Apple Pay (Deprecated)',
+                    'description' => 'Apple Pay mit Unzer payments',
+                ],
+                'en-GB' => [
+                    'name' => 'Apple Pay (Veraltet)',
+                    'description' => 'Apple Pay with Unzer payments',
+                ],
+            ],
+        ],
+        [
+            'id' => self::PAYMENT_ID_APPLE_PAY_V2,
+            'handlerIdentifier' => UnzerApplePayV2PaymentHandler::class,
+            'name' => 'Apple Pay',
+            'technicalName' => 'unzer_applepay_v2',
             'translations' => [
                 'de-DE' => [
                     'name' => 'Apple Pay',
@@ -449,6 +477,8 @@ class PaymentInstaller implements InstallerInterface
     private const PLUGIN_VERSION_PAYLATER_INSTALLMENT = '5.6.0';
     private const PLUGIN_VERSION_PAYLATER_DIRECT_DEBIT = '5.7.0';
 
+    public const APPLE_PAY_DOMAIN_VERIFICATION_FILE_CONTENT = '7b2276657273696f6e223a312c227073704964223a2244303134343945313932433041444436323041333641443243393834373337433245313930423230333138343431393437433743423736364338344534323638222c22637265617465644f6e223a313731383839323737333837377d';
+
     private EntityRepository $paymentMethodRepository;
 
     private PluginIdProvider $pluginIdProvider;
@@ -459,15 +489,16 @@ class PaymentInstaller implements InstallerInterface
         $this->pluginIdProvider = $pluginIdProvider;
     }
 
-    public function install(InstallContext $context): void
+    public function install(InstallContext $context, ?object $publicFileSystem): void
     {
         $this->upsertPaymentMethods($context);
+        $this->createApplePayDomainVerification($publicFileSystem);
     }
 
-    public function update(UpdateContext $context): void
+    public function update(UpdateContext $context, ?object $publicFileSystem): void
     {
-        $this->upsertPaymentMethods($context);
-
+        $this->upsertPaymentMethods($context, $publicFileSystem);
+        $this->createApplePayDomainVerification($publicFileSystem);
         if ($context->getUpdatePluginVersion() === self::PLUGIN_VERSION_PAYLATER_INVOICE) {
             $this->paymentMethodRepository->upsert([
                 $this->getPaymentMethod(self::PAYMENT_ID_INVOICE),
@@ -541,9 +572,35 @@ class PaymentInstaller implements InstallerInterface
             }
         }
         $this->deprecateGiropay($context);
+        $this->deprecatePaymentMethods($context);
     }
 
-    private function deprecateGiropay(InstallContext $context):void{
+    private function deprecatePaymentMethods(InstallContext $context):void{
+        $upsertPayload = [];
+        foreach (self::DEPRECATED_PAYMENT_METHOD_IDS as $paymentMethodId) {
+            $upsertPayload[] = [
+                'id' => $paymentMethodId,
+                'translations' => [
+                    'de-DE' => [
+                        'customFields' => [
+                            'isDeprecated' => 1,
+                        ],
+                    ],
+                    'en-GB' => [
+                        'customFields' => [
+                            'isDeprecated' => 1,
+                        ],
+                    ],
+                ],
+
+            ];
+        }
+
+        $this->paymentMethodRepository->upsert($upsertPayload, $context->getContext());
+    }
+
+    private function deprecateGiropay(InstallContext $context): void
+    {
         $existingPaymentMethod = $this->paymentMethodRepository->search(new Criteria([self::PAYMENT_ID_GIROPAY]), $context->getContext())->first();
         if ($existingPaymentMethod === null) {
             return;
@@ -553,7 +610,7 @@ class PaymentInstaller implements InstallerInterface
             'id' => self::PAYMENT_ID_GIROPAY,
             'active' => false,
             'name' => 'Giropay (Veraltet)',
-            'translations'=> [
+            'translations' => [
                 'de-DE' => [
                     'name' => 'Giropay (Veraltet)',
                 ],
@@ -598,5 +655,19 @@ class PaymentInstaller implements InstallerInterface
         }
 
         return null;
+    }
+
+    private function createApplePayDomainVerification(?object $publicFileSystem): void
+    {
+        if (!$publicFileSystem instanceof Filesystem) {
+            return;
+        }
+        if ($publicFileSystem->has('.well-known/apple-developer-merchantid-domain-association')) {
+            return;
+        }
+        $publicFileSystem->write(
+            '.well-known/apple-developer-merchantid-domain-association',
+            self::APPLE_PAY_DOMAIN_VERIFICATION_FILE_CONTENT
+        );
     }
 }

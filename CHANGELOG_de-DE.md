@@ -1,3 +1,6 @@
+# 6.3.0
+* Überarbeitete Apple Pay Integration
+
 # 6.2.6
 * Fix Apple Pay Zahlungsverarbeitung
 

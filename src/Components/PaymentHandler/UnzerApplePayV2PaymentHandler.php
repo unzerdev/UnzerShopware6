@@ -20,12 +20,12 @@ use UnzerSDK\Exceptions\UnzerApiException;
 use UnzerSDK\Resources\PaymentTypes\BasePaymentType;
 use UnzerSDK\Resources\PaymentTypes\Card;
 
-class UnzerApplePayPaymentHandler extends AbstractUnzerPaymentHandler
+class UnzerApplePayV2PaymentHandler extends AbstractUnzerPaymentHandler
 {
     use CanCharge;
     use CanAuthorize;
 
-    /** @var BasePaymentType|Card */
+    /** @var BasePaymentType */
     protected $paymentType;
 
     /**

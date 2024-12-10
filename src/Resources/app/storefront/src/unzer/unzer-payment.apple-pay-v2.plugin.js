@@ -9,9 +9,9 @@ export default class UnzerPaymentApplePayPlugin extends Plugin {
         currency: 'EUR',
         shopName: 'Unzer GmbH',
         amount: '0.0',
-        applePayButtonSelector: 'apple-pay-button',
+        applePayButtonSelector: '.apple-pay-button',
         checkoutConfirmButtonSelector: '#confirmFormSubmit',
-        applePayMethodSelector: '.unzer-payment-apple-pay-method-wrapper',
+        applePayMethodSelector: '.unzer-payment-apple-pay-v2-method-wrapper',
         authorizePaymentUrl: '',
         merchantValidationUrl: '',
         noApplePayMessage: '',
@@ -49,7 +49,6 @@ export default class UnzerPaymentApplePayPlugin extends Plugin {
         this.client = new HttpClient();
 
         if (this._hasCapability()) {
-            this._createScript();
             this._createForm();
             this._registerEvents();
         } else {
@@ -63,17 +62,9 @@ export default class UnzerPaymentApplePayPlugin extends Plugin {
 
     _disableApplePay() {
         DomAccess.querySelector(document, this.options.applePayMethodSelector, false).remove();
-        DomAccess.querySelectorAll(document, '[data-unzer-payment-apple-pay]', false).forEach((pluginElement) => pluginElement.remove());
+        DomAccess.querySelectorAll(document, '[data-unzer-payment-apple-pay-v2]', false).forEach((pluginElement) => pluginElement.remove());
         this._unzerPaymentPlugin.showError({ message: this.options.noApplePayMessage });
         this._unzerPaymentPlugin.setSubmitButtonActive(false);
-    }
-
-    _createScript() {
-        const script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';
-
-        document.head.appendChild(script);
     }
 
     /**
@@ -95,7 +86,7 @@ export default class UnzerPaymentApplePayPlugin extends Plugin {
             countryCode: this.options.countryCode,
             currencyCode: this.options.currency,
             supportedNetworks: this.options.supportedNetworks,
-            merchantCapabilities: ['supports3DS'],
+            merchantCapabilities: this.options.merchantCapabilities,
             total: { label: this.options.shopName, amount: this.options.amount }
         };
 
@@ -103,47 +94,19 @@ export default class UnzerPaymentApplePayPlugin extends Plugin {
             return;
         }
 
-        const session = new window.ApplePaySession(6, applePayPaymentRequest);
-        session.onvalidatemerchant = (event) => {
-            try {
-                me.client.post(me.options.merchantValidationUrl, JSON.stringify({ merchantValidationUrl: event.validationURL }), (response) => {
-                    session.completeMerchantValidation(JSON.parse(response));
-                });
-            } catch(e) {
-                session.abort();
-            }
-        }
+        const session = this.applePay.initApplePaySession(applePayPaymentRequest);
 
         session.onpaymentauthorized = (event) => {
             const paymentData = event.payment.token.paymentData;
 
             me.applePay.createResource(paymentData)
                 .then((createdResource) => {
-                    PageLoadingIndicatorUtil.create();
-
-                    try {
-                        me.client.post(me.options.authorizePaymentUrl, JSON.stringify(createdResource), (response) => {
-                            const responseData = JSON.parse(response);
-                            if (responseData.transactionStatus === 'pending') {
-                                session.completePayment({status: window.ApplePaySession.STATUS_SUCCESS});
-                                me._unzerPaymentPlugin.setSubmitButtonActive(false);
-                                me._unzerPaymentPlugin.submitting = true;
-                                me._unzerPaymentPlugin.submitResource(createdResource);
-                            } else {
-                                PageLoadingIndicatorUtil.remove();
-                                session.completePayment({status: window.ApplePaySession.STATUS_FAILURE});
-                                session.abort();
-                            }
-                        });
-                    } catch(e) {
-                        PageLoadingIndicatorUtil.remove();
-                        session.completePayment({status: window.ApplePaySession.STATUS_FAILURE});
-                        session.abort();
-                    }
+                    me._unzerPaymentPlugin.setSubmitButtonActive(false);
+                    me._unzerPaymentPlugin.submitting = true;
+                    me._unzerPaymentPlugin.submitResource(createdResource);
                 })
                 .catch(() => {
                     PageLoadingIndicatorUtil.remove();
-                    session.completePayment({status: window.ApplePaySession.STATUS_FAILURE});
                     session.abort();
                 })
                 .finally(() => {
@@ -151,7 +114,6 @@ export default class UnzerPaymentApplePayPlugin extends Plugin {
                     me._unzerPaymentPlugin.submitting = false;
                 });
         }
-
         session.begin();
     }
 

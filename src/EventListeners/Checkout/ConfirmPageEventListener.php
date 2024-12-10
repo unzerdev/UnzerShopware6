@@ -25,6 +25,7 @@ use UnzerPayment6\Components\PaymentHandler\UnzerGooglePayPaymentHandler;
 use UnzerPayment6\Components\Struct\Configuration;
 use UnzerPayment6\Components\Struct\KeyPairContext;
 use UnzerPayment6\Components\Struct\PageExtension\Checkout\Confirm\ApplePayPageExtension;
+use UnzerPayment6\Components\Struct\PageExtension\Checkout\Confirm\ApplePayV2PageExtension;
 use UnzerPayment6\Components\Struct\PageExtension\Checkout\Confirm\CreditCardPageExtension;
 use UnzerPayment6\Components\Struct\PageExtension\Checkout\Confirm\DirectDebitPageExtension;
 use UnzerPayment6\Components\Struct\PageExtension\Checkout\Confirm\DirectDebitSecuredPageExtension;
@@ -108,42 +109,42 @@ class ConfirmPageEventListener implements EventSubscriberInterface
         $paymentMethodId = $paymentMethod->getId();
         $this->configData = $this->configReader->read($salesChannelContext->getSalesChannel()->getId());
 
-        if ($paymentMethodId === PaymentInstaller::PAYMENT_ID_CREDIT_CARD) {
-            $this->addCreditCardExtension($event);
-        }
-
-        if ($paymentMethodId === PaymentInstaller::PAYMENT_ID_PAYPAL) {
-            $this->addPayPalExtension($event);
-        }
-
-        if ($paymentMethodId === PaymentInstaller::PAYMENT_ID_DIRECT_DEBIT) {
-            $this->addDirectDebitExtension($event);
-        }
-
-        if ($paymentMethodId === PaymentInstaller::PAYMENT_ID_DIRECT_DEBIT_SECURED) {
-            $this->addDirectDebitSecuredExtension($event);
-        }
-
-        if ($paymentMethodId === PaymentInstaller::PAYMENT_ID_PAYLATER_INVOICE) {
-            $this->addFraudPreventionExtension($event);
-        }
-
-        if ($paymentMethodId === PaymentInstaller::PAYMENT_ID_INSTALLMENT_SECURED) {
-            $this->addInstallmentSecuredExtension($event);
-        }
-
-        if ($paymentMethodId === PaymentInstaller::PAYMENT_ID_APPLE_PAY) {
-            $this->addApplePayExtension($event);
-        }
-
-        if ($paymentMethodId === PaymentInstaller::PAYMENT_ID_PAYLATER_INSTALLMENT) {
-            $this->addPaylaterInstallmentExtension($event);
-            $this->addFraudPreventionExtension($event);
-        }
-
-        if ($paymentMethodId === PaymentInstaller::PAYMENT_ID_PAYLATER_DIRECT_DEBIT_SECURED) {
-            $this->addPaylaterDirectDebitSecuredExtension($event);
-            $this->addFraudPreventionExtension($event);
+        switch ($paymentMethodId) {
+            case PaymentInstaller::PAYMENT_ID_CREDIT_CARD:
+                $this->addCreditCardExtension($event);
+                break;
+            case PaymentInstaller::PAYMENT_ID_PAYPAL:
+                $this->addPayPalExtension($event);
+                break;
+            case PaymentInstaller::PAYMENT_ID_DIRECT_DEBIT:
+                $this->addDirectDebitExtension($event);
+                break;
+            case PaymentInstaller::PAYMENT_ID_DIRECT_DEBIT_SECURED:
+                $this->addDirectDebitSecuredExtension($event);
+                break;
+            case PaymentInstaller::PAYMENT_ID_PAYLATER_INVOICE:
+                $this->addFraudPreventionExtension($event);
+                break;
+            case PaymentInstaller::PAYMENT_ID_INSTALLMENT_SECURED:
+                $this->addInstallmentSecuredExtension($event);
+                break;
+            case PaymentInstaller::PAYMENT_ID_APPLE_PAY:
+                $this->addApplePayExtension($event);
+                break;
+            case PaymentInstaller::PAYMENT_ID_APPLE_PAY_V2:
+                $this->addApplePayV2Extension($event);
+                break;
+            case PaymentInstaller::PAYMENT_ID_PAYLATER_INSTALLMENT:
+                $this->addPaylaterInstallmentExtension($event);
+                $this->addFraudPreventionExtension($event);
+                break;
+            case PaymentInstaller::PAYMENT_ID_PAYLATER_DIRECT_DEBIT_SECURED:
+                $this->addPaylaterDirectDebitSecuredExtension($event);
+                $this->addFraudPreventionExtension($event);
+                break;
+            case PaymentInstaller::PAYMENT_ID_GOOGLE_PAY:
+                $this->addGooglePayExtension($event);
+                break;
         }
 
         if (in_array($paymentMethodId, PaymentInstaller::PAYMENT_METHOD_IDS)) {
@@ -325,6 +326,11 @@ class ConfirmPageEventListener implements EventSubscriberInterface
     private function addApplePayExtension(PageLoadedEvent $event): void
     {
         $event->getPage()->addExtension(ApplePayPageExtension::EXTENSION_NAME, new ApplePayPageExtension());
+    }
+
+    private function addApplePayV2Extension(PageLoadedEvent $event): void
+    {
+        $event->getPage()->addExtension(ApplePayV2PageExtension::EXTENSION_NAME, new ApplePayV2PageExtension());
     }
 
     private function addGooglePayExtension(PageLoadedEvent $event): void
