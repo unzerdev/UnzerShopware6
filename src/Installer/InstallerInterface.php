@@ -12,9 +12,9 @@ use Shopware\Core\Framework\Plugin\Context\UpdateContext;
 
 interface InstallerInterface
 {
-    public function install(InstallContext $context): void;
+    public function install(InstallContext $context, ?object $publicFileSystem): void;
 
-    public function update(UpdateContext $context): void;
+    public function update(UpdateContext $context, ?object $publicFileSystem): void;
 
     public function uninstall(UninstallContext $context): void;
 

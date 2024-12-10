@@ -1,3 +1,6 @@
+# 5.10.0
+* Updated Apple Pay Integration
+
 # 5.9.7
 * Fix Apple Pay payment processing
 

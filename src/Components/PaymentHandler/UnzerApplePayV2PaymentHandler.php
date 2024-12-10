@@ -20,12 +20,12 @@ use UnzerSDK\Exceptions\UnzerApiException;
 use UnzerSDK\Resources\PaymentTypes\BasePaymentType;
 use UnzerSDK\Resources\PaymentTypes\Card;
 
-class UnzerApplePayPaymentHandler extends AbstractUnzerPaymentHandler
+class UnzerApplePayV2PaymentHandler extends AbstractUnzerPaymentHandler
 {
     use CanCharge;
     use CanAuthorize;
 
-    /** @var BasePaymentType|Card */
+    /** @var BasePaymentType */
     protected $paymentType;
 
     /**
@@ -33,9 +33,10 @@ class UnzerApplePayPaymentHandler extends AbstractUnzerPaymentHandler
      */
     public function pay(
         AsyncPaymentTransactionStruct $transaction,
-        RequestDataBag $dataBag,
-        SalesChannelContext $salesChannelContext
-    ): RedirectResponse {
+        RequestDataBag                $dataBag,
+        SalesChannelContext           $salesChannelContext
+    ): RedirectResponse
+    {
         parent::pay($transaction, $dataBag, $salesChannelContext);
 
         if ($this->paymentType === null) {
@@ -54,9 +55,9 @@ class UnzerApplePayPaymentHandler extends AbstractUnzerPaymentHandler
             $this->logger->error(
                 sprintf('Caught an API exception in %s of %s', __METHOD__, __CLASS__),
                 [
-                    'dataBag'     => $dataBag,
+                    'dataBag' => $dataBag,
                     'transaction' => $transaction,
-                    'exception'   => $apiException,
+                    'exception' => $apiException,
                 ]
             );
 
@@ -70,9 +71,9 @@ class UnzerApplePayPaymentHandler extends AbstractUnzerPaymentHandler
             $this->logger->error(
                 sprintf('Caught a generic exception in %s of %s', __METHOD__, __CLASS__),
                 [
-                    'dataBag'     => $dataBag,
+                    'dataBag' => $dataBag,
                     'transaction' => $transaction,
-                    'exception'   => $exception,
+                    'exception' => $exception,
                 ]
             );
 
