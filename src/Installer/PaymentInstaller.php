@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace UnzerPayment6\Installer;
 
+use League\Flysystem\Filesystem;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -15,12 +16,12 @@ use Shopware\Core\Framework\Plugin\Context\UpdateContext;
 use Shopware\Core\Framework\Plugin\Util\PluginIdProvider;
 use UnzerPayment6\Components\PaymentHandler\UnzerAlipayPaymentHandler;
 use UnzerPayment6\Components\PaymentHandler\UnzerApplePayPaymentHandler;
+use UnzerPayment6\Components\PaymentHandler\UnzerApplePayV2PaymentHandler;
 use UnzerPayment6\Components\PaymentHandler\UnzerBancontactHandler;
 use UnzerPayment6\Components\PaymentHandler\UnzerCreditCardPaymentHandler;
 use UnzerPayment6\Components\PaymentHandler\UnzerDirectDebitPaymentHandler;
 use UnzerPayment6\Components\PaymentHandler\UnzerDirectDebitSecuredPaymentHandler;
 use UnzerPayment6\Components\PaymentHandler\UnzerEpsPaymentHandler;
-use UnzerPayment6\Components\PaymentHandler\UnzerGiropayPaymentHandler;
 use UnzerPayment6\Components\PaymentHandler\UnzerGooglePayPaymentHandler;
 use UnzerPayment6\Components\PaymentHandler\UnzerIdealPaymentHandler;
 use UnzerPayment6\Components\PaymentHandler\UnzerInstallmentSecuredPaymentHandler;
@@ -40,28 +41,29 @@ use UnzerPayment6\UnzerPayment6;
 
 class PaymentInstaller implements InstallerInterface
 {
-    public const PAYMENT_ID_ALIPAY                        = 'bc4c2cbfb5fda0bf549e4807440d0a54';
-    public const PAYMENT_ID_CREDIT_CARD                   = '4673044aff79424a938d42e9847693c3';
-    public const PAYMENT_ID_DIRECT_DEBIT                  = '713c7a332b432dcd4092701eda522a7e';
-    public const PAYMENT_ID_DIRECT_DEBIT_SECURED          = '5123af5ce94a4a286641973e8de7eb60';
-    public const PAYMENT_ID_EPS                           = '17830aa7e6a00b99eab27f0e45ac5e0d';
-    public const PAYMENT_ID_FLEXIPAY                      = '4ebb99451f36ba01f13d5871a30bce2c';
-    public const PAYMENT_ID_GIROPAY                       = 'd4b90a17af62c1bb2f6c3b1fed339425';
-    public const PAYMENT_ID_INSTALLMENT_SECURED           = '4b9f8d08b46a83839fd0eb14fe00efe6';
-    public const PAYMENT_ID_INVOICE                       = '08fb8d9a72ab4ca62b811e74f2eca79f';
-    public const PAYMENT_ID_INVOICE_SECURED               = '6cc3b56ce9b0f80bd44039c047282a41';
-    public const PAYMENT_ID_IDEAL                         = '614ad722a03ee96baa2446793143215b';
-    public const PAYMENT_ID_PAYPAL                        = '409fe641d6d62a4416edd6307d758791';
-    public const PAYMENT_ID_PRE_PAYMENT                   = '085b64d0028a8bd447294e03c4eb411a';
-    public const PAYMENT_ID_PRZELEWY24                    = 'cd6f59d572e6c90dff77a48ce16b44db';
-    public const PAYMENT_ID_SOFORT                        = '95aa098aac8f11e9a2a32a2ae2dbcce4';
-    public const PAYMENT_ID_WE_CHAT                       = 'fd96d03535a46d197f5adac17c9f8bac';
-    public const PAYMENT_ID_BANCONTACT                    = '87aa7a4e786c43ec9d4b9c1fd2aa51eb';
-    public const PAYMENT_ID_PAYLATER_INVOICE              = '09588ffee8064f168e909ff31889dd7f';
-    public const PAYMENT_ID_APPLE_PAY                     = '62490bda54fa48fbb29ed6b9368bafe1';
-    public const PAYMENT_ID_PAYLATER_INSTALLMENT          = '12fbfbce271a43a89b3783453b88e9a6';
+    public const PAYMENT_ID_ALIPAY = 'bc4c2cbfb5fda0bf549e4807440d0a54';
+    public const PAYMENT_ID_CREDIT_CARD = '4673044aff79424a938d42e9847693c3';
+    public const PAYMENT_ID_DIRECT_DEBIT = '713c7a332b432dcd4092701eda522a7e';
+    public const PAYMENT_ID_DIRECT_DEBIT_SECURED = '5123af5ce94a4a286641973e8de7eb60';
+    public const PAYMENT_ID_EPS = '17830aa7e6a00b99eab27f0e45ac5e0d';
+    public const PAYMENT_ID_FLEXIPAY = '4ebb99451f36ba01f13d5871a30bce2c';
+    public const PAYMENT_ID_GIROPAY = 'd4b90a17af62c1bb2f6c3b1fed339425';
+    public const PAYMENT_ID_INSTALLMENT_SECURED = '4b9f8d08b46a83839fd0eb14fe00efe6';
+    public const PAYMENT_ID_INVOICE = '08fb8d9a72ab4ca62b811e74f2eca79f';
+    public const PAYMENT_ID_INVOICE_SECURED = '6cc3b56ce9b0f80bd44039c047282a41';
+    public const PAYMENT_ID_IDEAL = '614ad722a03ee96baa2446793143215b';
+    public const PAYMENT_ID_PAYPAL = '409fe641d6d62a4416edd6307d758791';
+    public const PAYMENT_ID_PRE_PAYMENT = '085b64d0028a8bd447294e03c4eb411a';
+    public const PAYMENT_ID_PRZELEWY24 = 'cd6f59d572e6c90dff77a48ce16b44db';
+    public const PAYMENT_ID_SOFORT = '95aa098aac8f11e9a2a32a2ae2dbcce4';
+    public const PAYMENT_ID_WE_CHAT = 'fd96d03535a46d197f5adac17c9f8bac';
+    public const PAYMENT_ID_BANCONTACT = '87aa7a4e786c43ec9d4b9c1fd2aa51eb';
+    public const PAYMENT_ID_PAYLATER_INVOICE = '09588ffee8064f168e909ff31889dd7f';
+    public const PAYMENT_ID_APPLE_PAY = '62490bda54fa48fbb29ed6b9368bafe1';
+    public const PAYMENT_ID_APPLE_PAY_V2 = '55d6b81aa84911ef948a2f39e097a1d7';
+    public const PAYMENT_ID_PAYLATER_INSTALLMENT = '12fbfbce271a43a89b3783453b88e9a6';
     public const PAYMENT_ID_PAYLATER_DIRECT_DEBIT_SECURED = '6d6adcd4b7bf40499873c294a85f32ed';
-    public const PAYMENT_ID_GOOGLE_PAY                    = '67b6d50c1ecd11ef9e21d7850819bc50';
+    public const PAYMENT_ID_GOOGLE_PAY = '67b6d50c1ecd11ef9e21d7850819bc50';
     public const PAYMENT_ID_TWINT = '6493b43244eb11efa900b7a80e209d6a';
 
     public const PAYMENT_METHOD_IDS = [
@@ -83,347 +85,373 @@ class PaymentInstaller implements InstallerInterface
         self::PAYMENT_ID_BANCONTACT,
         self::PAYMENT_ID_PAYLATER_INVOICE,
         self::PAYMENT_ID_APPLE_PAY,
+        self::PAYMENT_ID_APPLE_PAY_V2,
         self::PAYMENT_ID_PAYLATER_INSTALLMENT,
         self::PAYMENT_ID_PAYLATER_DIRECT_DEBIT_SECURED,
         self::PAYMENT_ID_GOOGLE_PAY,
         self::PAYMENT_ID_TWINT,
     ];
 
+    public const DEPRECATED_PAYMENT_METHOD_IDS = [
+        self::PAYMENT_ID_FLEXIPAY,
+        self::PAYMENT_ID_INVOICE,
+        self::PAYMENT_ID_INVOICE_SECURED,
+        self::PAYMENT_ID_INSTALLMENT_SECURED,
+        self::PAYMENT_ID_DIRECT_DEBIT_SECURED,
+        self::PAYMENT_ID_APPLE_PAY,
+    ];
+
     public const PAYMENT_METHODS = [
         [
-            'id'                => self::PAYMENT_ID_ALIPAY,
+            'id' => self::PAYMENT_ID_ALIPAY,
             'handlerIdentifier' => UnzerAlipayPaymentHandler::class,
-            'name'              => 'Alipay',
+            'name' => 'Alipay',
             'technicalName' => 'unzer_alipay',
-            'translations'      => [
+            'translations' => [
                 'de-DE' => [
-                    'name'        => 'Alipay',
+                    'name' => 'Alipay',
                     'description' => 'Alipay Zahlungen mit Unzer payments',
                 ],
                 'en-GB' => [
-                    'name'        => 'Alipay',
+                    'name' => 'Alipay',
                     'description' => 'Alipay payments with Unzer payments',
                 ],
             ],
         ],
         [
-            'id'                => self::PAYMENT_ID_FLEXIPAY,
+            'id' => self::PAYMENT_ID_FLEXIPAY,
             'handlerIdentifier' => UnzerPisPaymentHandler::class,
-            'name'              => 'Bank Transfer (Deprecated)',
+            'name' => 'Bank Transfer (Deprecated)',
             'technicalName' => 'unzer_banktransfer_deorecated',
-            'translations'      => [
+            'translations' => [
                 'de-DE' => [
-                    'name'        => 'Bank Transfer (Veraltet)',
+                    'name' => 'Bank Transfer (Veraltet)',
                     'description' => 'Unzer Bank Transfer Zahlungen mit Unzer payments',
                 ],
                 'en-GB' => [
-                    'name'        => 'Bank Transfer (Deprecated)',
+                    'name' => 'Bank Transfer (Deprecated)',
                     'description' => 'Unzer Bank Transfer payments',
                 ],
             ],
         ],
         [
-            'id'                => self::PAYMENT_ID_CREDIT_CARD,
+            'id' => self::PAYMENT_ID_CREDIT_CARD,
             'handlerIdentifier' => UnzerCreditCardPaymentHandler::class,
-            'name'              => 'Credit card',
+            'name' => 'Credit card',
             'technicalName' => 'unzer_creditcard',
-            'translations'      => [
+            'translations' => [
                 'de-DE' => [
-                    'name'        => 'Kreditkarte',
+                    'name' => 'Kreditkarte',
                     'description' => 'Kreditkartenzahlungen mit Unzer payments',
                 ],
                 'en-GB' => [
-                    'name'        => 'Credit card',
+                    'name' => 'Credit card',
                     'description' => 'Credit card payments with Unzer payments',
                 ],
             ],
         ],
         [
-            'id'                => self::PAYMENT_ID_EPS,
+            'id' => self::PAYMENT_ID_EPS,
             'handlerIdentifier' => UnzerEpsPaymentHandler::class,
-            'name'              => 'EPS',
+            'name' => 'EPS',
             'technicalName' => 'unzer_eps',
-            'translations'      => [
+            'translations' => [
                 'de-DE' => [
-                    'name'        => 'EPS',
+                    'name' => 'EPS',
                     'description' => 'EPS Zahlungen mit Unzer payments',
                 ],
                 'en-GB' => [
-                    'name'        => 'EPS',
+                    'name' => 'EPS',
                     'description' => 'EPS payments with Unzer payments',
                 ],
             ],
         ],
         [
-            'id'                => self::PAYMENT_ID_IDEAL,
+            'id' => self::PAYMENT_ID_IDEAL,
             'handlerIdentifier' => UnzerIdealPaymentHandler::class,
-            'name'              => 'iDEAL',
+            'name' => 'iDEAL',
             'technicalName' => 'unzer_ideal',
-            'translations'      => [
+            'translations' => [
                 'de-DE' => [
-                    'name'        => 'iDEAL',
+                    'name' => 'iDEAL',
                     'description' => 'iDEAL Zahlungen mit Unzer payments',
                 ],
                 'en-GB' => [
-                    'name'        => 'iDEAL',
+                    'name' => 'iDEAL',
                     'description' => 'iDEAL payments with Unzer payments',
                 ],
             ],
         ],
         [
-            'id'                => self::PAYMENT_ID_INVOICE,
+            'id' => self::PAYMENT_ID_INVOICE,
             'handlerIdentifier' => UnzerInvoicePaymentHandler::class,
-            'name'              => 'Invoice (Deprecated)',
+            'name' => 'Invoice (Deprecated)',
             'technicalName' => 'unzer_invoice_deprecated',
-            'translations'      => [
+            'translations' => [
                 'de-DE' => [
-                    'name'        => 'Rechnungskauf (Veraltet)',
+                    'name' => 'Rechnungskauf (Veraltet)',
                     'description' => 'Rechnungskauf mit Unzer payments',
                 ],
                 'en-GB' => [
-                    'name'        => 'Invoice (Deprecated)',
+                    'name' => 'Invoice (Deprecated)',
                     'description' => 'Invoice payments with Unzer payments',
                 ],
             ],
         ],
         [
-            'id'                => self::PAYMENT_ID_INVOICE_SECURED,
+            'id' => self::PAYMENT_ID_INVOICE_SECURED,
             'handlerIdentifier' => UnzerInvoiceSecuredPaymentHandler::class,
-            'name'              => 'Invoice Secured (Deprecated)',
+            'name' => 'Invoice Secured (Deprecated)',
             'technicalName' => 'unzer_invoicesecured_deprecated',
-            'translations'      => [
+            'translations' => [
                 'de-DE' => [
-                    'name'        => 'Rechnungskauf Gesichert (Veraltet)',
+                    'name' => 'Rechnungskauf Gesichert (Veraltet)',
                     'description' => 'Gesicherter Rechnungskauf mit Unzer payments',
                 ],
                 'en-GB' => [
-                    'name'        => 'Invoice Secured (Deprecated)',
+                    'name' => 'Invoice Secured (Deprecated)',
                     'description' => 'Invoice Secured payments with Unzer payments',
                 ],
             ],
         ],
         [
-            'id'                => self::PAYMENT_ID_INSTALLMENT_SECURED,
+            'id' => self::PAYMENT_ID_INSTALLMENT_SECURED,
             'handlerIdentifier' => UnzerInstallmentSecuredPaymentHandler::class,
-            'name'              => 'Installment (Deprecated)',
+            'name' => 'Installment (Deprecated)',
             'technicalName' => 'unzer_installment_deprecated',
-            'active'            => false,
-            'translations'      => [
+            'active' => false,
+            'translations' => [
                 'de-DE' => [
-                    'name'        => 'Ratenkauf (Veraltet)',
+                    'name' => 'Ratenkauf (Veraltet)',
                     'description' => 'Unzer Ratenkauf',
                 ],
                 'en-GB' => [
-                    'name'        => 'Installment (Deprecated)',
+                    'name' => 'Installment (Deprecated)',
                     'description' => 'Unzer Installment',
                 ],
             ],
         ],
         [
-            'id'                => self::PAYMENT_ID_PAYLATER_INSTALLMENT,
+            'id' => self::PAYMENT_ID_PAYLATER_INSTALLMENT,
             'handlerIdentifier' => UnzerPaylaterInstallmentPaymentHandler::class,
-            'name'              => 'Installment',
+            'name' => 'Installment',
             'technicalName' => 'unzer_installment',
-            'translations'      => [
+            'translations' => [
                 'de-DE' => [
-                    'name'        => 'Ratenkauf',
+                    'name' => 'Ratenkauf',
                     'description' => 'Unzer Ratenkauf',
                 ],
                 'en-GB' => [
-                    'name'        => 'Installment',
+                    'name' => 'Installment',
                     'description' => 'Unzer Installment',
                 ],
             ],
         ],
         [
-            'id'                => self::PAYMENT_ID_PAYLATER_DIRECT_DEBIT_SECURED,
+            'id' => self::PAYMENT_ID_PAYLATER_DIRECT_DEBIT_SECURED,
             'handlerIdentifier' => UnzerPaylaterDirectDebitSecuredPaymentHandler::class,
-            'name'              => 'Direct Debit',
+            'name' => 'Direct Debit',
             'technicalName' => 'unzer_directdebitsecured',
-            'translations'      => [
+            'translations' => [
                 'de-DE' => [
-                    'name'        => 'Lastschrift',
+                    'name' => 'Lastschrift',
                     'description' => 'Unzer Lastschrift',
                 ],
                 'en-GB' => [
-                    'name'        => 'Direct Debit',
+                    'name' => 'Direct Debit',
                     'description' => 'Unzer Direct Debit',
                 ],
             ],
         ],
         [
-            'id'                => self::PAYMENT_ID_PAYPAL,
+            'id' => self::PAYMENT_ID_PAYPAL,
             'handlerIdentifier' => UnzerPayPalPaymentHandler::class,
-            'name'              => 'PayPal',
+            'name' => 'PayPal',
             'technicalName' => 'unzer_paypal',
-            'translations'      => [
+            'translations' => [
                 'de-DE' => [
-                    'name'        => 'PayPal',
+                    'name' => 'PayPal',
                     'description' => 'PayPal Zahlungen mit Unzer payments',
                 ],
                 'en-GB' => [
-                    'name'        => 'PayPal',
+                    'name' => 'PayPal',
                     'description' => 'PayPal payments with Unzer payments',
                 ],
             ],
         ],
         [
-            'id'                => self::PAYMENT_ID_PRE_PAYMENT,
+            'id' => self::PAYMENT_ID_PRE_PAYMENT,
             'handlerIdentifier' => UnzerPrePaymentPaymentHandler::class,
-            'name'              => 'Prepayment',
+            'name' => 'Prepayment',
             'technicalName' => 'unzer_prepayment',
-            'translations'      => [
+            'translations' => [
                 'de-DE' => [
-                    'name'        => 'Vorkasse',
+                    'name' => 'Vorkasse',
                     'description' => 'Zahlung auf Vorkasse mit Unzer payments',
                 ],
                 'en-GB' => [
-                    'name'        => 'Prepayment',
+                    'name' => 'Prepayment',
                     'description' => 'Prepayment with Unzer payments',
                 ],
             ],
         ],
         [
-            'id'                => self::PAYMENT_ID_PRZELEWY24,
+            'id' => self::PAYMENT_ID_PRZELEWY24,
             'handlerIdentifier' => UnzerPrzelewyHandler::class,
-            'name'              => 'Przelewy24',
+            'name' => 'Przelewy24',
             'technicalName' => 'unzer_przelewy24',
-            'translations'      => [
+            'translations' => [
                 'de-DE' => [
-                    'name'        => 'Przelewy24',
+                    'name' => 'Przelewy24',
                     'description' => 'Przelewy24 Zahlungen mit Unzer payments',
                 ],
                 'en-GB' => [
-                    'name'        => 'Przelewy24',
+                    'name' => 'Przelewy24',
                     'description' => 'Przelewy24 payments with Unzer payments',
                 ],
             ],
         ],
         [
-            'id'                => self::PAYMENT_ID_DIRECT_DEBIT,
+            'id' => self::PAYMENT_ID_DIRECT_DEBIT,
             'handlerIdentifier' => UnzerDirectDebitPaymentHandler::class,
-            'name'              => 'SEPA Direct Debit',
+            'name' => 'SEPA Direct Debit',
             'technicalName' => 'unzer_directdebit',
-            'translations'      => [
+            'translations' => [
                 'de-DE' => [
-                    'name'        => 'SEPA Lastschrift',
+                    'name' => 'SEPA Lastschrift',
                     'description' => 'SEPA Lastschrift Zahlungen mit Unzer payments',
                 ],
                 'en-GB' => [
-                    'name'        => 'SEPA Direct Debit',
+                    'name' => 'SEPA Direct Debit',
                     'description' => 'SEPA Direct Debit payments with Unzer payments',
                 ],
             ],
         ],
         [
-            'id'                => self::PAYMENT_ID_DIRECT_DEBIT_SECURED,
+            'id' => self::PAYMENT_ID_DIRECT_DEBIT_SECURED,
             'handlerIdentifier' => UnzerDirectDebitSecuredPaymentHandler::class,
-            'name'              => 'SEPA Direct Debit Secured (Deprecated)',
+            'name' => 'SEPA Direct Debit Secured (Deprecated)',
             'technicalName' => 'unzer_directdebitsecured_deprecated',
-            'active'            => false,
-            'translations'      => [
+            'active' => false,
+            'translations' => [
                 'de-DE' => [
-                    'name'        => 'SEPA Lastschrift Gesichert (Veraltet)',
+                    'name' => 'SEPA Lastschrift Gesichert (Veraltet)',
                     'description' => 'Gesicherte SEPA Lastschrift Zahlungen mit Unzer payments',
                 ],
                 'en-GB' => [
-                    'name'        => 'SEPA Direct Debit Secured (Deprecated)',
+                    'name' => 'SEPA Direct Debit Secured (Deprecated)',
                     'description' => 'Secured SEPA Direct Debit payments with Unzer payments',
                 ],
             ],
         ],
         [
-            'id'                => self::PAYMENT_ID_SOFORT,
+            'id' => self::PAYMENT_ID_SOFORT,
             'handlerIdentifier' => UnzerSofortPaymentHandler::class,
-            'name'              => 'Sofort',
+            'name' => 'Sofort',
             'technicalName' => 'unzer_sofort',
-            'translations'      => [
+            'translations' => [
                 'de-DE' => [
-                    'name'        => 'Sofort',
+                    'name' => 'Sofort',
                     'description' => 'Sofort mit Unzer payments',
                 ],
                 'en-GB' => [
-                    'name'        => 'Sofort',
+                    'name' => 'Sofort',
                     'description' => 'Sofort with Unzer payments',
                 ],
             ],
         ],
         [
-            'id'                => self::PAYMENT_ID_WE_CHAT,
+            'id' => self::PAYMENT_ID_WE_CHAT,
             'handlerIdentifier' => UnzerWeChatPaymentHandler::class,
-            'name'              => 'WeChat',
+            'name' => 'WeChat',
             'technicalName' => 'unzer_wechatpay',
-            'translations'      => [
+            'translations' => [
                 'de-DE' => [
-                    'name'        => 'WeChat',
+                    'name' => 'WeChat',
                     'description' => 'WeChat Zahlungen mit Unzer payments',
                 ],
                 'en-GB' => [
-                    'name'        => 'WeChat',
+                    'name' => 'WeChat',
                     'description' => 'WeChat payments with Unzer payments',
                 ],
             ],
         ],
         [
-            'id'                => self::PAYMENT_ID_BANCONTACT,
+            'id' => self::PAYMENT_ID_BANCONTACT,
             'handlerIdentifier' => UnzerBancontactHandler::class,
-            'name'              => 'Bancontact',
+            'name' => 'Bancontact',
             'technicalName' => 'unzer_bancontact',
-            'translations'      => [
+            'translations' => [
                 'de-DE' => [
-                    'name'        => 'Bancontact',
+                    'name' => 'Bancontact',
                     'description' => 'Bancontact Zahlungen mit Unzer payments',
                 ],
                 'en-GB' => [
-                    'name'        => 'Bancontact',
+                    'name' => 'Bancontact',
                     'description' => 'Bancontact payments with Unzer payments',
                 ],
             ],
         ],
         [
-            'id'                => self::PAYMENT_ID_PAYLATER_INVOICE,
+            'id' => self::PAYMENT_ID_PAYLATER_INVOICE,
             'handlerIdentifier' => UnzerPaylaterInvoicePaymentHandler::class,
-            'name'              => 'Invoice',
+            'name' => 'Invoice',
             'technicalName' => 'unzer_invoice',
-            'translations'      => [
+            'translations' => [
                 'de-DE' => [
-                    'name'        => 'Rechnungskauf',
+                    'name' => 'Rechnungskauf',
                     'description' => 'Rechnungskauf mit Unzer payments',
                 ],
                 'en-GB' => [
-                    'name'        => 'Invoice',
+                    'name' => 'Invoice',
                     'description' => 'Invoice payments with Unzer payments',
                 ],
             ],
         ],
         [
-            'id'                => self::PAYMENT_ID_APPLE_PAY,
+            'id' => self::PAYMENT_ID_APPLE_PAY,
             'handlerIdentifier' => UnzerApplePayPaymentHandler::class,
-            'name'              => 'Apple Pay',
+            'name' => 'Apple Pay (Deprecated)',
             'technicalName' => 'unzer_applepay',
-            'translations'      => [
+            'translations' => [
                 'de-DE' => [
-                    'name'        => 'Apple Pay',
+                    'name' => 'Apple Pay (Deprecated)',
                     'description' => 'Apple Pay mit Unzer payments',
                 ],
                 'en-GB' => [
-                    'name'        => 'Apple Pay',
+                    'name' => 'Apple Pay (Veraltet)',
                     'description' => 'Apple Pay with Unzer payments',
                 ],
             ],
         ],
         [
-            'id'                => self::PAYMENT_ID_GOOGLE_PAY,
-            'handlerIdentifier' => UnzerGooglePayPaymentHandler::class,
-            'name'              => 'Google Pay',
-            'technicalName' => 'unzer_googlepay',
-            'translations'      => [
+            'id' => self::PAYMENT_ID_APPLE_PAY_V2,
+            'handlerIdentifier' => UnzerApplePayV2PaymentHandler::class,
+            'name' => 'Apple Pay',
+            'technicalName' => 'unzer_applepay_v2',
+            'translations' => [
                 'de-DE' => [
-                    'name'        => 'Google Pay',
+                    'name' => 'Apple Pay',
+                    'description' => 'Apple Pay mit Unzer payments',
+                ],
+                'en-GB' => [
+                    'name' => 'Apple Pay',
+                    'description' => 'Apple Pay with Unzer payments',
+                ],
+            ],
+        ],
+        [
+            'id' => self::PAYMENT_ID_GOOGLE_PAY,
+            'handlerIdentifier' => UnzerGooglePayPaymentHandler::class,
+            'name' => 'Google Pay',
+            'technicalName' => 'unzer_googlepay',
+            'translations' => [
+                'de-DE' => [
+                    'name' => 'Google Pay',
                     'description' => 'Google Pay mit Unzer payments',
                 ],
                 'en-GB' => [
-                    'name'        => 'Google Pay',
+                    'name' => 'Google Pay',
                     'description' => 'Google Pay with Unzer payments',
                 ],
             ],
@@ -445,10 +473,12 @@ class PaymentInstaller implements InstallerInterface
             ],
         ],
     ];
-    private const PLUGIN_VERSION_PAYLATER_INVOICE      = '5.0.0';
-    private const PLUGIN_VERSION_PAYLATER_INSTALLMENT  = '5.6.0';
+    private const PLUGIN_VERSION_PAYLATER_INVOICE = '5.0.0';
+    private const PLUGIN_VERSION_PAYLATER_INSTALLMENT = '5.6.0';
     private const PLUGIN_VERSION_PAYLATER_DIRECT_DEBIT = '5.7.0';
     private const PLUGIN_VERSION_GIROPAY_REMOVAL = '5.8.1';
+
+    public const APPLE_PAY_DOMAIN_VERIFICATION_FILE_CONTENT = '7b2276657273696f6e223a312c227073704964223a2244303134343945313932433041444436323041333641443243393834373337433245313930423230333138343431393437433743423736364338344534323638222c22637265617465644f6e223a313731383839323737333837377d';
 
     // TODO: Adjust this if compatibility is at least 6.5.0.0
     /** @var EntityRepository|\Shopware\Core\Checkout\Payment\DataAbstractionLayer\PaymentMethodRepositoryDecorator */
@@ -464,18 +494,19 @@ class PaymentInstaller implements InstallerInterface
     public function __construct($paymentMethodRepository, PluginIdProvider $pluginIdProvider)
     {
         $this->paymentMethodRepository = $paymentMethodRepository;
-        $this->pluginIdProvider        = $pluginIdProvider;
+        $this->pluginIdProvider = $pluginIdProvider;
     }
 
-    public function install(InstallContext $context): void
+    public function install(InstallContext $context, ?object $publicFileSystem): void
     {
         $this->upsertPaymentMethods($context);
+        $this->createApplePayDomainVerification($publicFileSystem);
     }
 
-    public function update(UpdateContext $context): void
+    public function update(UpdateContext $context, ?object $publicFileSystem): void
     {
-        $this->upsertPaymentMethods($context);
-
+        $this->upsertPaymentMethods($context, $publicFileSystem);
+        $this->createApplePayDomainVerification($publicFileSystem);
         if ($context->getUpdatePluginVersion() === self::PLUGIN_VERSION_PAYLATER_INVOICE) {
             $this->paymentMethodRepository->upsert([
                 $this->getPaymentMethod(self::PAYMENT_ID_INVOICE),
@@ -484,10 +515,10 @@ class PaymentInstaller implements InstallerInterface
 
             // Make sure every Unzer payment method is linked to the plugin
             $pluginId = $this->pluginIdProvider->getPluginIdByBaseClass(UnzerPayment6::class, $context->getContext());
-            $update   = array_map(static function ($paymentMethod) use ($pluginId) {
+            $update = array_map(static function ($paymentMethod) use ($pluginId) {
                 return [
                     'pluginId' => $pluginId,
-                    'id'       => $paymentMethod['id'],
+                    'id' => $paymentMethod['id'],
                 ];
             }, self::PAYMENT_METHODS);
             $this->paymentMethodRepository->upsert($update, $context->getContext());
@@ -521,9 +552,9 @@ class PaymentInstaller implements InstallerInterface
 
         $update = array_map(static function ($paymentMethod) use ($pluginId) {
             return [
-                'pluginId'     => $pluginId,
-                'id'           => $paymentMethod['id'],
-                'name'         => $paymentMethod['name'],
+                'pluginId' => $pluginId,
+                'id' => $paymentMethod['id'],
+                'name' => $paymentMethod['name'],
                 'translations' => $paymentMethod['translations'],
             ];
         }, self::PAYMENT_METHODS);
@@ -542,16 +573,42 @@ class PaymentInstaller implements InstallerInterface
                 $this->paymentMethodRepository->upsert([$paymentMethod], $context->getContext());
             } else {
                 $upsertPayload = [
-                    'id'     => $paymentMethod['id'],
-                    'technicalName' => $paymentMethod['technicalName']
+                    'id' => $paymentMethod['id'],
+                    'technicalName' => $paymentMethod['technicalName'],
                 ];
                 $this->paymentMethodRepository->upsert([$upsertPayload], $context->getContext());
             }
         }
         $this->deprecateGiropay($context);
+        $this->deprecatePaymentMethods($context);
     }
 
-    private function deprecateGiropay(InstallContext $context):void
+    private function deprecatePaymentMethods(InstallContext $context): void
+    {
+        $upsertPayload = [];
+        foreach (self::DEPRECATED_PAYMENT_METHOD_IDS as $paymentMethodId) {
+            $upsertPayload[] = [
+                'id' => $paymentMethodId,
+                'translations' => [
+                    'de-DE' => [
+                        'customFields' => [
+                            'isDeprecated' => 1,
+                        ],
+                    ],
+                    'en-GB' => [
+                        'customFields' => [
+                            'isDeprecated' => 1,
+                        ],
+                    ],
+                ],
+
+            ];
+        }
+
+        $this->paymentMethodRepository->upsert($upsertPayload, $context->getContext());
+    }
+
+    private function deprecateGiropay(InstallContext $context): void
     {
         $existingPaymentMethod = $this->paymentMethodRepository->search(new Criteria([self::PAYMENT_ID_GIROPAY]), $context->getContext())->first();
         if ($existingPaymentMethod === null) {
@@ -562,7 +619,7 @@ class PaymentInstaller implements InstallerInterface
             'id' => self::PAYMENT_ID_GIROPAY,
             'active' => false,
             'name' => 'Giropay (Veraltet)',
-            'translations'=> [
+            'translations' => [
                 'de-DE' => [
                     'name' => 'Giropay (Veraltet)',
                 ],
@@ -578,14 +635,14 @@ class PaymentInstaller implements InstallerInterface
         $upsertPayload = [];
         foreach (self::PAYMENT_METHODS as $paymentMethod) {
             $paymentMethodCriteria = new Criteria([$paymentMethod['id']]);
-            $hasPaymentMethod      = $this->paymentMethodRepository->searchIds($paymentMethodCriteria, $context->getContext())->getTotal() > 0;
+            $hasPaymentMethod = $this->paymentMethodRepository->searchIds($paymentMethodCriteria, $context->getContext())->getTotal() > 0;
 
             if (!$hasPaymentMethod) {
                 continue;
             }
 
             $upsertPayload[] = [
-                'id'     => $paymentMethod['id'],
+                'id' => $paymentMethod['id'],
                 'active' => $active,
             ];
         }
@@ -607,5 +664,19 @@ class PaymentInstaller implements InstallerInterface
         }
 
         return null;
+    }
+
+    private function createApplePayDomainVerification(?object $publicFileSystem): void
+    {
+        if (!$publicFileSystem instanceof Filesystem) {
+            return;
+        }
+        if ($publicFileSystem->has('.well-known/apple-developer-merchantid-domain-association')) {
+            return;
+        }
+        $publicFileSystem->write(
+            '.well-known/apple-developer-merchantid-domain-association',
+            self::APPLE_PAY_DOMAIN_VERIFICATION_FILE_CONTENT
+        );
     }
 }

@@ -25,6 +25,7 @@ use UnzerPayment6\Components\PaymentHandler\UnzerGooglePayPaymentHandler;
 use UnzerPayment6\Components\Struct\Configuration;
 use UnzerPayment6\Components\Struct\KeyPairContext;
 use UnzerPayment6\Components\Struct\PageExtension\Checkout\Confirm\ApplePayPageExtension;
+use UnzerPayment6\Components\Struct\PageExtension\Checkout\Confirm\ApplePayV2PageExtension;
 use UnzerPayment6\Components\Struct\PageExtension\Checkout\Confirm\CreditCardPageExtension;
 use UnzerPayment6\Components\Struct\PageExtension\Checkout\Confirm\DirectDebitPageExtension;
 use UnzerPayment6\Components\Struct\PageExtension\Checkout\Confirm\DirectDebitSecuredPageExtension;
@@ -135,6 +136,10 @@ class ConfirmPageEventListener implements EventSubscriberInterface
 
         if ($paymentMethodId === PaymentInstaller::PAYMENT_ID_APPLE_PAY) {
             $this->addApplePayExtension($event);
+        }
+
+        if ($paymentMethodId === PaymentInstaller::PAYMENT_ID_APPLE_PAY_V2) {
+            $this->addApplePayV2Extension($event);
         }
 
         if ($paymentMethodId === PaymentInstaller::PAYMENT_ID_PAYLATER_INSTALLMENT) {
@@ -326,6 +331,11 @@ class ConfirmPageEventListener implements EventSubscriberInterface
     private function addApplePayExtension(PageLoadedEvent $event): void
     {
         $event->getPage()->addExtension(ApplePayPageExtension::EXTENSION_NAME, new ApplePayPageExtension());
+    }
+
+    private function addApplePayV2Extension(PageLoadedEvent $event): void
+    {
+        $event->getPage()->addExtension(ApplePayV2PageExtension::EXTENSION_NAME, new ApplePayV2PageExtension());
     }
 
     private function addGooglePayExtension(PageLoadedEvent $event): void

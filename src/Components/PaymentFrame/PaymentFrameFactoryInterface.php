@@ -19,6 +19,7 @@ interface PaymentFrameFactoryInterface
         PaymentInstaller::PAYMENT_ID_INSTALLMENT_SECURED           => '@Storefront/storefront/component/unzer/frames/installment-secured.html.twig',
         PaymentInstaller::PAYMENT_ID_PAYPAL                        => '@Storefront/storefront/component/unzer/frames/paypal.html.twig',
         PaymentInstaller::PAYMENT_ID_APPLE_PAY                     => '@Storefront/storefront/component/unzer/frames/empty.html.twig',
+        PaymentInstaller::PAYMENT_ID_APPLE_PAY_V2                  => '@Storefront/storefront/component/unzer/frames/empty.html.twig',
         PaymentInstaller::PAYMENT_ID_GOOGLE_PAY                    => '@Storefront/storefront/component/unzer/frames/empty.html.twig',
         PaymentInstaller::PAYMENT_ID_PAYLATER_INSTALLMENT          => '@Storefront/storefront/component/unzer/frames/paylater-installment.html.twig',
         PaymentInstaller::PAYMENT_ID_PAYLATER_DIRECT_DEBIT_SECURED => '@Storefront/storefront/component/unzer/frames/paylater-direct-debit-secured.html.twig',

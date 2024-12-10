@@ -67,7 +67,7 @@ class CustomFieldInstaller implements InstallerInterface
     /**
      * {@inheritdoc}
      */
-    public function install(InstallContext $context): void
+    public function install(InstallContext $context, ?object $publicFileSystem = null): void
     {
         $this->customFieldSetRepository->upsert(self::CUSTOM_FIELDS, $context->getContext());
     }
@@ -75,7 +75,7 @@ class CustomFieldInstaller implements InstallerInterface
     /**
      * {@inheritdoc}
      */
-    public function update(UpdateContext $context): void
+    public function update(UpdateContext $context, ?object $publicFileSystem = null): void
     {
         $this->customFieldSetRepository->upsert(self::CUSTOM_FIELDS, $context->getContext());
     }

@@ -59,7 +59,7 @@ class UnzerPayment6 extends Plugin
         /** @var PluginIdProvider $pluginIdProvider */
         $pluginIdProvider = $this->container->get(PluginIdProvider::class);
 
-        (new PaymentInstaller($paymentRepository, $pluginIdProvider))->install($installContext);
+        (new PaymentInstaller($paymentRepository, $pluginIdProvider))->install($installContext, $this->container->get('shopware.filesystem.public'));
         (new CustomFieldInstaller($customFieldSetRepository))->install($installContext);
     }
 
@@ -77,7 +77,7 @@ class UnzerPayment6 extends Plugin
         /** @var PluginIdProvider $pluginIdProvider */
         $pluginIdProvider = $this->container->get(PluginIdProvider::class);
 
-        (new PaymentInstaller($paymentRepository, $pluginIdProvider))->update($updateContext);
+        (new PaymentInstaller($paymentRepository, $pluginIdProvider))->update($updateContext, $this->container->get('shopware.filesystem.public'));
         (new CustomFieldInstaller($customFieldSetRepository))->update($updateContext);
     }
 

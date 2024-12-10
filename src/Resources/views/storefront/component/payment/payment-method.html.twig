@@ -5,6 +5,10 @@
         <div class="unzer-payment-apple-pay-method-wrapper">
             {{ parent() }}
         </div>
+    {% elseif payment and payment.id == constant("UnzerPayment6\\Installer\\PaymentInstaller::PAYMENT_ID_APPLE_PAY_V2") %}
+        <div class="unzer-payment-apple-pay-v2-method-wrapper">
+            {{ parent() }}
+        </div>
     {% else %}
         {{ parent() }}
     {% endif %}

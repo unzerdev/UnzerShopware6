@@ -1,13 +1,32 @@
 # UnzerPayment
 
-For a full list of payment methods supported by the Unzer plugin, go to <a href="https://docs.unzer.com/plugins/supported-payment-methods/" target="_blank">Supported payment methods</a>.
+Unzer payment integration for Shopware 6 including the following payment methods:
+* Alipay
+* Apple Pay
+* Bancontact
+* Credit Card
+* EPS
+* Google Pay
+* iDEAL
+* Invoice
+* PayPal
+* Prepayment
+* SEPA direct debit
+* SOFORT
+* TWINT
+* Unzer Direct
+* Unzer direct debit (secured)
+* Unzer Invoice B2C / B2B (secured)
+* Unzer Installment (secured)
+* WeChat Pay
 
-For more details about the plugin compatability, go to <a href="https://store.shopware.com/en/unzer48059319318f/unzer-payments-for-shopware-6.html" target="_blank">Shopware store page</a> and the <a href="https://docs.shopware.com/en/shopware-6-en/first-steps/system-requirements" target="_blank">Shopware requirements page</a>.
+Regarding plugin compatibility, please take a look at the [Shopware store page](https://store.shopware.com/en/unzer48059319318f/unzer-payments-for-shopware-6.html).
 
 ## Installation
-
 ### For production
-For detailed list of instructions, go to the <a href="https://docs.unzer.com/plugins/shopware-6/shop6-install-plugin/#step-1-install-the-plugin" target="_blank">Install the plugin</a> section.
+1. Upload the plugin files into the `custom/plugins` folder in your shopware installation.
+2. Inside the plugin directory `custom/plugins/UnzerPayment6` run `composer install --no-dev`
+3. Switch to admin and install the plugin using the Shopware plugin manager and configure it as you need.
 
 ### For development
 1. Clone the plugin repository into the `custom/plugins` folder in your shopware installation.
@@ -18,11 +37,10 @@ For detailed list of instructions, go to the <a href="https://docs.unzer.com/plu
 
     > `./psh.phar storefront:build`
 
-This automatically generates all the files required for the plugin to work correctly.
+This will automatically generate all files required for the plugin to work correctly
 
 ## Configuration
-
-After the plugin installation, it is necessary to add the new payment methods to the desired sales channel.
+After the actual plugin installation it is necessary to add the new payment methods to the desired sales channel. 
 Currently, the only sales channel that is supported is the Storefront.
 
-For more information about configuration, go to the <a href="https://docs.unzer.com/plugins/shopware-6/" target="_blank">Unzer Shopware 6 documentation</a>.
+Further information and configuration you can find within the <a href="https://docs.unzer.com/plugins/shopware-6/" target="_blank">manual</a>
