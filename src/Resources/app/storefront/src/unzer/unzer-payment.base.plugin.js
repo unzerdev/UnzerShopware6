@@ -113,6 +113,7 @@ export default class UnzerPaymentBasePlugin extends Plugin {
         errorWrapper.hidden = false;
         errorWrapper.scrollIntoView({ block: 'end', behavior: 'smooth' });
 
+        this.submitting = false;
         this.setSubmitButtonActive(true);
     }
 
