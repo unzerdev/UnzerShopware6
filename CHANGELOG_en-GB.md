@@ -1,3 +1,7 @@
+# 6.3.1
+* Apple Pay Infotext in backend
+* Fix: Retry payment after being cancelled by Unzer JS
+
 # 6.3.0
 * Updated Apple Pay Integration
 
