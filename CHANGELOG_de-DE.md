@@ -1,3 +1,7 @@
+# 5.10.1
+* Apple Pay Infotext in Backend
+* Fix: Erneuter payment-Versuch nach Cancellation durch Unzer JS
+
 # 5.10.0
 * Updated Apple Pay Integration
 
